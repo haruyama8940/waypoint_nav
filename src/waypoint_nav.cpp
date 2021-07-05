@@ -103,7 +103,7 @@ WaypointNav::WaypointNav() :
 
   function_map_.insert(std::make_pair("run", std::bind(&WaypointNav::run, this)));
   function_map_.insert(std::make_pair("suspend", std::bind(&WaypointNav::suspend, this)));
-
+  function_map_.insert(std::make_pair("start_learning_mode", std::bind(&WaypointNav::start_learning_mode, this)));
   visualization_wp_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("visualization_wp", 1);
   nav_vel_pub = nh_.advertise<geometry_msgs::Twist>("nav_vel", 1);
   cmd_vel_sub_ = nh_.subscribe("cmd_vel", 1, &WaypointNav::cmdVelCallback, this);//cmd_vel or icart_mini/cmd_vel
@@ -112,7 +112,7 @@ WaypointNav::WaypointNav() :
   clear_costmaps_srv_ = nh_.serviceClient<std_srvs::Empty>("/move_base/clear_costmaps");
   StartClient = nh_.serviceClient<std_srvs::SetBool>("start_call");  // startクライアントの生成
   EndClient =nh_.serviceClient<std_srvs::SetBool>("end_call");  // endクライアントの生成
-  swiching_pub=nh_.advertise<std_msgs::Float32>("swicing", 10);
+  swiching_pub=nh_.advertise<std_msgs::Float32>("swiching", 10);
 }
 
 bool WaypointNav::read_yaml(){
