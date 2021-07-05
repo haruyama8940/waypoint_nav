@@ -12,6 +12,7 @@
 #include <visualization_msgs/MarkerArray.h>
 #include "yaml-cpp/yaml.h"
 #include <std_srvs/SetBool.h>
+#include <std_msgs/Float32.h>
 
 #include <vector>
 #include <list>
@@ -67,6 +68,7 @@ private:
   ros::Subscriber cmd_vel_sub_;
   ros::Publisher visualization_wp_pub_;
   ros::Publisher nav_vel_pub;
+  ros::Publisher swiching_pub;
   ros::ServiceClient clear_costmaps_srv_;
   tf2_ros::Buffer tfBuffer_;
   tf2_ros::TransformListener tfListener_;
@@ -110,6 +112,7 @@ WaypointNav::WaypointNav() :
   clear_costmaps_srv_ = nh_.serviceClient<std_srvs::Empty>("/move_base/clear_costmaps");
   StartClient = nh_.serviceClient<std_srvs::SetBool>("start_call");  // startクライアントの生成
   EndClient =nh_.serviceClient<std_srvs::SetBool>("end_call");  // endクライアントの生成
+  swiching_pub=nh_.advertise<std_msgs::Float32>("swicing", 10);
 }
 
 bool WaypointNav::read_yaml(){
@@ -378,13 +381,15 @@ void WaypointNav::suspend(){
   }
 }
 void WaypointNav::start_learning_mode(){
+  float way_num;
   suspend();
+  way_num=1;
+  swiching_pub.publish(way_num);
   //serviseをswitchへとばして学習を起動させるstart_lerning
-  //req.data=
-  req.data=1;
-  bool result = StartClient.call(req, resp); // リクエストの送信
-  if(result) ROS_INFO_STREAM("Recive Start response!");     // レスポンス受信の表示
-  else ROS_INFO_STREAM("Start Error!");
+  //req.data=1;
+  //bool result = StartClient.call(req, resp); // リクエストの送信
+  //if(result) ROS_INFO_STREAM("Recive Start response!");     // レスポンス受信の表示
+  //else ROS_INFO_STREAM("Start Error!");
 }
 
 int main(int argc, char** argv){
