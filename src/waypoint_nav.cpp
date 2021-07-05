@@ -381,9 +381,9 @@ void WaypointNav::suspend(){
   }
 }
 void WaypointNav::start_learning_mode(){
-  float way_num;
+  std_msgs::Float32 way_num;
   suspend();
-  way_num=1;
+  way_num.data=1;
   swiching_pub.publish(way_num);
   //serviseをswitchへとばして学習を起動させるstart_lerning
   //req.data=1;
