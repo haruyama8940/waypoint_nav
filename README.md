@@ -71,7 +71,8 @@ See this [sample.yaml](https://github.com/tiger0421/waypoint_nav/blob/main/confi
 
 - suspend  
   This makes your robot suspend mode after moving.
-
+- start_learning_mode
+  This is switching waypoint_nav to learning
 ## Suspend Mode
 When you want a robot to start or resume navigation, call `rosservice` like below.  
 `
