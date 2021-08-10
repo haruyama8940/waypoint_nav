@@ -49,11 +49,15 @@ public:
   boost::shared_ptr<geometry_msgs::Twist> nav_vel_msg;
 // declear functions which is called by depending on "function" in yaml
   void run();
-  void suspend();
-  void start_learning_mode();
+  void suspend();  
+  void run_go();
+  void run_right();
+  void run_left();
+  /*
   void run_cmd();
   void cmd_turn_right();
   void cmd_turn_left();
+  */
   uint64_t get_rand_range( uint64_t min_vel, uint64_t max_vel );
  
 private:
@@ -113,11 +117,14 @@ WaypointNav::WaypointNav() :
 
   function_map_.insert(std::make_pair("run", std::bind(&WaypointNav::run, this)));
   function_map_.insert(std::make_pair("suspend", std::bind(&WaypointNav::suspend, this)));
-  function_map_.insert(std::make_pair("start_learning_mode", std::bind(&WaypointNav::start_learning_mode, this)));
+  function_map_.insert(std::make_pair("run_go", std::bind(&WaypointNav::run_go, this)));
+  function_map_.insert(std::make_pair("run_right", std::bind(&WaypointNav::run_right, this)));
+  function_map_.insert(std::make_pair("run_left", std::bind(&WaypointNav::run_left, this)));
+  /*
   function_map_.insert(std::make_pair("run_cmd", std::bind(&WaypointNav::run_cmd, this)));
   function_map_.insert(std::make_pair("cmd_turn_right", std::bind(&WaypointNav::cmd_turn_right, this)));
   function_map_.insert(std::make_pair("cmd_turn_left", std::bind(&WaypointNav::cmd_turn_left, this)));
-
+ */
   
   visualization_wp_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("visualization_wp", 1);
   nav_vel_pub = nh_.advertise<geometry_msgs::Twist>("nav_vel", 1);
@@ -403,36 +410,138 @@ void WaypointNav::suspend(){
     suspend_flg_ = true;
   }
 }
-void WaypointNav::start_learning_mode(){
-  std_msgs::Float32 way_num;
-  suspend();
-  way_num.data=1;
-  swiching_pub.publish(way_num);
-  //serviseをswitchへとばして学習を起動させるstart_lerning
-  //req.data=1;
-  //bool result = StartClient.call(req, resp); // リクエストの送信
-  //if(result) ROS_INFO_STREAM("Recive Start response!");     // レスポンス受信の表示
-  //else ROS_INFO_STREAM("Start Error!");
-}
-void WaypointNav::run_cmd(){
-cmd_msg.data=cmd_list[get_rand_range(0,2)];
-cmd_pub.publish(cmd_msg);
-run();
+
+
+void WaypointNav::run_go(){//ネームスペースWaypointNavのrun()へ
+  int resend_num = 0;
+  send_wp();
+  while((resend_num < resend_thresh_) && ros::ok()){
+    double time = ros::Time::now().toSec();
+    actionlib::SimpleClientGoalState state_ = move_base_action_.getState();
+    if(time - last_moved_time_ > wait_time_){
+      ROS_WARN("Robot can't reach this waypoint");
+      ROS_WARN("Resend this waypoint");
+      resend_num++;
+      send_wp();
+    }
+    else if(state_ == actionlib::SimpleClientGoalState::ACTIVE || 
+            state_ == actionlib::SimpleClientGoalState::PENDING){
+      
+        cmd_msg.data=cmd_list[get_rand_range(0,2)];
+        cmd_pub.publish(cmd_msg);
+      ros::spinOnce();
+      rate_.sleep();
+    }
+    else if( !on_wp() || state_ == actionlib::SimpleClientGoalState::SUCCEEDED){
+      ROS_INFO("Reach target waypoint!");
+      ROS_INFO("Run next waypoint");
+      break;
+    }
+    else{
+      ROS_WARN("Robot can't reach this waypoint");
+      ROS_WARN("Resend this waypoint");
+      resend_num++;
+      send_wp();
+    }
+  }
+  if(resend_num >= resend_thresh_){
+    ROS_ERROR("Cancel this waypoint because robot can't reach there");
+    move_base_action_.cancelAllGoals();
+  }
 }
 
-void WaypointNav::cmd_turn_left(){
+void WaypointNav::run_right(){//ネームスペースWaypointNavのrun()へ
+  int resend_num = 0;
+  send_wp();
+  while((resend_num < resend_thresh_) && ros::ok()){
+    double time = ros::Time::now().toSec();
+    actionlib::SimpleClientGoalState state_ = move_base_action_.getState();
+    if(time - last_moved_time_ > wait_time_){
+      ROS_WARN("Robot can't reach this waypoint");
+      ROS_WARN("Resend this waypoint");
+      resend_num++;
+      send_wp();
+    }
+    else if(state_ == actionlib::SimpleClientGoalState::ACTIVE || 
+            state_ == actionlib::SimpleClientGoalState::PENDING){
+      
+        cmd_msg.data=cmd_list[1];
+        cmd_pub.publish(cmd_msg);
+      ros::spinOnce();
+      rate_.sleep();
+    }
+    else if( !on_wp() || state_ == actionlib::SimpleClientGoalState::SUCCEEDED){
+      ROS_INFO("Reach target waypoint!");
+      ROS_INFO("Run next waypoint");
+      break;
+    }
+    else{
+      ROS_WARN("Robot can't reach this waypoint");
+      ROS_WARN("Resend this waypoint");
+      resend_num++;
+      send_wp();
+    }
+  }
+  if(resend_num >= resend_thresh_){
+    ROS_ERROR("Cancel this waypoint because robot can't reach there");
+    move_base_action_.cancelAllGoals();
+  }
+}
+
+void WaypointNav::run_left(){//ネームスペースWaypointNavのrun()へ
+  int resend_num = 0;
+  send_wp();
+  while((resend_num < resend_thresh_) && ros::ok()){
+    double time = ros::Time::now().toSec();
+    actionlib::SimpleClientGoalState state_ = move_base_action_.getState();
+    if(time - last_moved_time_ > wait_time_){
+      ROS_WARN("Robot can't reach this waypoint");
+      ROS_WARN("Resend this waypoint");
+      resend_num++;
+      send_wp();
+    }
+    else if(state_ == actionlib::SimpleClientGoalState::ACTIVE || 
+            state_ == actionlib::SimpleClientGoalState::PENDING){
+      
+        cmd_msg.data=cmd_list[2];
+        cmd_pub.publish(cmd_msg);
+      ros::spinOnce();
+      rate_.sleep();
+    }
+    else if( !on_wp() || state_ == actionlib::SimpleClientGoalState::SUCCEEDED){
+      ROS_INFO("Reach target waypoint!");
+      ROS_INFO("Run next waypoint");
+      break;
+    }
+    else{
+      ROS_WARN("Robot can't reach this waypoint");
+      ROS_WARN("Resend this waypoint");
+      resend_num++;
+      send_wp();
+    }
+  }
+  if(resend_num >= resend_thresh_){
+    ROS_ERROR("Cancel this waypoint because robot can't reach there");
+    move_base_action_.cancelAllGoals();
+  }
+}
+
+/*void WaypointNav::run_left(){
 cmd_msg.data=cmd_list[1];
 cmd_pub.publish(cmd_msg);
 ROS_INFO("right");
-run();
+int pp =1;
+//run_cmd(pp);
 }
 
 void WaypointNav::cmd_turn_right(){
 cmd_msg.data=cmd_list[2];
 cmd_pub.publish(cmd_msg);
 ROS_INFO("left");
-run();
+int pp =2
+//run_cmd(pp);
 }
+*/
 
 int main(int argc, char** argv){
   ros::init(argc, argv, "waypoint_nav");
