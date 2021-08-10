@@ -13,6 +13,7 @@
 #include "yaml-cpp/yaml.h"
 #include <std_srvs/SetBool.h>
 #include <std_msgs/Float32.h>
+#include <std_msgs/String.h>
 
 #include <vector>
 #include <list>
@@ -23,10 +24,12 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <random>
+
 using namespace::std;
 typedef struct Waypoints{
   geometry_msgs::Pose pose;
-  std::string function;// 文字列リテラルyamlのfunc定義
+  std::string function;
 }Waypoints;
 
 class WaypointNav{
@@ -48,13 +51,19 @@ public:
   void run();
   void suspend();
   void start_learning_mode();
-  
+  void run_cmd();
+  void cmd_turn_right();
+  void cmd_turn_left();
+  uint64_t get_rand_range( uint64_t min_vel, uint64_t max_vel );
+ 
 private:
   actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> move_base_action_;
   std::list<Waypoints> waypoints_;
   decltype(waypoints_)::iterator current_waypoint_;
   std::string robot_frame_, world_frame_;
   std::string filename_;
+  std_msgs::String cmd_msg;
+  std::vector<std::string> cmd_list = {"go_stright","turn_right","turn_left"};
   
   bool loop_flg_;
   bool suspend_flg_;
@@ -69,6 +78,7 @@ private:
   ros::Publisher visualization_wp_pub_;
   ros::Publisher nav_vel_pub;
   ros::Publisher swiching_pub;
+  ros::Publisher cmd_pub;
   ros::ServiceClient clear_costmaps_srv_;
   tf2_ros::Buffer tfBuffer_;
   tf2_ros::TransformListener tfListener_;
@@ -104,6 +114,11 @@ WaypointNav::WaypointNav() :
   function_map_.insert(std::make_pair("run", std::bind(&WaypointNav::run, this)));
   function_map_.insert(std::make_pair("suspend", std::bind(&WaypointNav::suspend, this)));
   function_map_.insert(std::make_pair("start_learning_mode", std::bind(&WaypointNav::start_learning_mode, this)));
+  function_map_.insert(std::make_pair("run_cmd", std::bind(&WaypointNav::run_cmd, this)));
+  function_map_.insert(std::make_pair("cmd_turn_right", std::bind(&WaypointNav::cmd_turn_right, this)));
+  function_map_.insert(std::make_pair("cmd_turn_left", std::bind(&WaypointNav::cmd_turn_left, this)));
+
+  
   visualization_wp_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("visualization_wp", 1);
   nav_vel_pub = nh_.advertise<geometry_msgs::Twist>("nav_vel", 1);
   cmd_vel_sub_ = nh_.subscribe("cmd_vel", 1, &WaypointNav::cmdVelCallback, this);//cmd_vel or icart_mini/cmd_vel
@@ -113,6 +128,8 @@ WaypointNav::WaypointNav() :
   StartClient = nh_.serviceClient<std_srvs::SetBool>("start_call");  // startクライアントの生成
   EndClient =nh_.serviceClient<std_srvs::SetBool>("end_call");  // endクライアントの生成
   swiching_pub=nh_.advertise<std_msgs::Float32>("swiching", 10);
+  cmd_pub = nh_.advertise<std_msgs::String>("cmd_pub", 10);
+
 }
 
 bool WaypointNav::read_yaml(){
@@ -335,6 +352,12 @@ bool WaypointNav::suspendNavigationCallback(std_srvs::Trigger::Request &request,
 
 // This function is not main loop.
 // Main loop function's name is run_wp()
+uint64_t WaypointNav::get_rand_range( uint64_t min_vel, uint64_t max_vel ){
+  static std::mt19937_64 mt64(0);
+  std::uniform_int_distribution<uint64_t> get_rand_uni_int( min_vel, max_vel );
+  return get_rand_uni_int(mt64);
+}
+
 void WaypointNav::run(){//ネームスペースWaypointNavのrun()へ
   int resend_num = 0;
   send_wp();
@@ -390,6 +413,25 @@ void WaypointNav::start_learning_mode(){
   //bool result = StartClient.call(req, resp); // リクエストの送信
   //if(result) ROS_INFO_STREAM("Recive Start response!");     // レスポンス受信の表示
   //else ROS_INFO_STREAM("Start Error!");
+}
+void WaypointNav::run_cmd(){
+cmd_msg.data=cmd_list[get_rand_range(0,2)];
+cmd_pub.publish(cmd_msg);
+run();
+}
+
+void WaypointNav::cmd_turn_left(){
+cmd_msg.data=cmd_list[1];
+cmd_pub.publish(cmd_msg);
+ROS_INFO("right");
+run();
+}
+
+void WaypointNav::cmd_turn_right(){
+cmd_msg.data=cmd_list[2];
+cmd_pub.publish(cmd_msg);
+ROS_INFO("left");
+run();
 }
 
 int main(int argc, char** argv){
