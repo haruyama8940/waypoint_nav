@@ -379,6 +379,8 @@ void WaypointNav::run(){//ネームスペースWaypointNavのrun()へ
     }
     else if(state_ == actionlib::SimpleClientGoalState::ACTIVE || 
             state_ == actionlib::SimpleClientGoalState::PENDING){
+      cmd_msg.data=cmd_list[get_rand_range(0,2)];
+      cmd_pub.publish(cmd_msg);
       ros::spinOnce();
       rate_.sleep();
     }
@@ -427,7 +429,7 @@ void WaypointNav::run_go(){//ネームスペースWaypointNavのrun()へ
     else if(state_ == actionlib::SimpleClientGoalState::ACTIVE || 
             state_ == actionlib::SimpleClientGoalState::PENDING){
       
-        cmd_msg.data=cmd_list[get_rand_range(0,2)];
+        cmd_msg.data=cmd_list[0];
         cmd_pub.publish(cmd_msg);
       ros::spinOnce();
       rate_.sleep();
