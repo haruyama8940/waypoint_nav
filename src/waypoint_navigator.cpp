@@ -1,6 +1,7 @@
 #include <ros/ros.h>
 #include <std_srvs/Trigger.h>
 #include <std_srvs/Empty.h>
+#include <std_msgs/Bool.h>
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/PoseArray.h>
 #include <geometry_msgs/Twist.h>
@@ -39,12 +40,7 @@ public:
   void run_wp();
   bool on_wp();
   void send_wp();
-<<<<<<< HEAD:src/waypoint_nav.cpp
   void cmdVelCallback(const geometry_msgs::Twist::Ptr& cmd_vel_msg);
-=======
-  void cmdVelCallback(const geometry_msgs::Twist::ConstPtr& cmd_vel_msg);
-  void timerCallback(const ros::TimerEvent& e);
->>>>>>> upstream/main:src/waypoint_navigator.cpp
   bool startNavigationCallback(std_srvs::Trigger::Request &request, std_srvs::Trigger::Response &response);
   bool suspendNavigationCallback(std_srvs::Trigger::Request &request, std_srvs::Trigger::Response &response);
   boost::shared_ptr<geometry_msgs::Twist> nav_vel_msg;
@@ -52,13 +48,13 @@ public:
   void run();
   void suspend();
   void end_supend();
+  void white_line();
 private:
   actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> move_base_action_;
   std::list<Waypoints> waypoints_;
   decltype(waypoints_)::iterator current_waypoint_;
   std::string robot_frame_, world_frame_;
   std::string filename_;
-  
   bool loop_flg_;
   bool suspend_flg_;
   double dist_err_;
@@ -71,6 +67,7 @@ private:
   ros::Subscriber cmd_vel_sub_;
   ros::Publisher visualization_wp_pub_;
   ros::Publisher nav_vel_pub;
+  ros::Publisher start_white_line;
   ros::ServiceClient clear_costmaps_srv_;
   ros::Timer timer_;
   tf2_ros::Buffer tfBuffer_;
@@ -104,6 +101,7 @@ WaypointNav::WaypointNav() :
 
   function_map_.insert(std::make_pair("run", std::bind(&WaypointNav::run, this)));
   function_map_.insert(std::make_pair("suspend", std::bind(&WaypointNav::suspend, this)));
+  function_map_.insert(std::make_pair("start_white", std::bind(&WaypointNav::white_line, this)));
 
   visualization_wp_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("visualization_wp", 1);
   nav_vel_pub = nh_.advertise<geometry_msgs::Twist>("nav_vel", 1);
@@ -262,10 +260,10 @@ bool WaypointNav::on_wp(){
 
 void WaypointNav::send_wp(){
   std_srvs::Empty empty;
-  while(!clear_costmaps_srv_.call(empty)) {
-    ROS_WARN("Resend clear costmap service");
-    ros::Duration(0.5).sleep();
-   }
+  // while(!clear_costmaps_srv_.call(empty)) {
+  //   ROS_WARN("Resend clear costmap service");
+  //   ros::Duration(0.5).sleep();
+  //  }
 
   move_base_msgs::MoveBaseGoal move_base_goal;
   move_base_goal.target_pose.header.stamp = ros::Time::now();
@@ -278,10 +276,10 @@ void WaypointNav::send_wp(){
 
   actionlib::SimpleClientGoalState state_ = move_base_action_.getState();
 
-  while(ros::ok() && (state_ != actionlib::SimpleClientGoalState::ACTIVE)){
-    ros::Duration(0.5);
-    state_ = move_base_action_.getState();
-  }
+  // while(ros::ok() && (state_ != actionlib::SimpleClientGoalState::ACTIVE)){
+  //   ros::Duration(0.5);
+  //   state_ = move_base_action_.getState();
+  // }
   last_moved_time_ = ros::Time::now().toSec();
 }
 
@@ -383,6 +381,13 @@ void WaypointNav::suspend(){
     suspend_flg_ = true;
   }
 }
+void WaypointNav::white_line(){
+  std_msgs::Bool flag;
+  suspend();
+  flag.data=true;
+  start_white_line.publish(flag);
+}
+
 void WaypointNav::end_supend(){
   //cmd_vel受け取って,nav_velとしてリマップして渡す
   //suspend_flg
