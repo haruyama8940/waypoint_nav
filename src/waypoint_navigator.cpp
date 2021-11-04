@@ -41,6 +41,7 @@ public:
   bool on_wp();
   void send_wp();
   void cmdVelCallback(const geometry_msgs::Twist::Ptr& cmd_vel_msg);
+  void timerCallback(const ros::TimerEvent& e);
   bool startNavigationCallback(std_srvs::Trigger::Request &request, std_srvs::Trigger::Response &response);
   bool suspendNavigationCallback(std_srvs::Trigger::Request &request, std_srvs::Trigger::Response &response);
   boost::shared_ptr<geometry_msgs::Twist> nav_vel_msg;
@@ -101,7 +102,7 @@ WaypointNav::WaypointNav() :
 
   function_map_.insert(std::make_pair("run", std::bind(&WaypointNav::run, this)));
   function_map_.insert(std::make_pair("suspend", std::bind(&WaypointNav::suspend, this)));
-  function_map_.insert(std::make_pair("start_white", std::bind(&WaypointNav::white_line, this)));
+  function_map_.insert(std::make_pair("white_line", std::bind(&WaypointNav::white_line, this)));
 
   visualization_wp_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("visualization_wp", 1);
   nav_vel_pub = nh_.advertise<geometry_msgs::Twist>("nav_vel", 1);
