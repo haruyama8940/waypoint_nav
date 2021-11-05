@@ -2,6 +2,7 @@
 #include <std_srvs/Trigger.h>
 #include <std_srvs/Empty.h>
 #include <std_msgs/Bool.h>
+#include <std_msgs/Int8.h>
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/PoseArray.h>
 #include <geometry_msgs/Twist.h>
@@ -106,6 +107,8 @@ WaypointNav::WaypointNav() :
 
   visualization_wp_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("visualization_wp", 1);
   nav_vel_pub = nh_.advertise<geometry_msgs::Twist>("nav_vel", 1);
+  start_white_line = nh_.advertise<std_msgs::Bool>("white_line", 1);
+
   cmd_vel_sub_ = nh_.subscribe("cmd_vel", 1, &WaypointNav::cmdVelCallback, this);//cmd_vel or icart_mini/cmd_vel
   start_server_ = nh_.advertiseService("start_wp_nav", &WaypointNav::startNavigationCallback, this);
   suspend_server_ = nh_.advertiseService("suspend_wp_nav", &WaypointNav::suspendNavigationCallback, this);
@@ -383,10 +386,12 @@ void WaypointNav::suspend(){
   }
 }
 void WaypointNav::white_line(){
-  std_msgs::Bool flag;
+  std_msgs::Int8 num;
+  std_msgs::Bool f;
   suspend();
-  flag.data=true;
-  start_white_line.publish(flag);
+  num.data=1;
+  f.data=true;
+  start_white_line.publish(f);
 }
 
 void WaypointNav::end_supend(){
