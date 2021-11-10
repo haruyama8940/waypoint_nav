@@ -45,6 +45,7 @@ public:
   void timerCallback(const ros::TimerEvent& e);
   bool startNavigationCallback(std_srvs::Trigger::Request &request, std_srvs::Trigger::Response &response);
   bool suspendNavigationCallback(std_srvs::Trigger::Request &request, std_srvs::Trigger::Response &response);
+  bool skipNavigationCallback(std_srvs::Trigger::Request &request, std_srvs::Trigger::Response &response);
   boost::shared_ptr<geometry_msgs::Twist> nav_vel_msg;
 // declear functions which is called by depending on "function" in yaml
   void run();
@@ -65,7 +66,7 @@ private:
   int resend_thresh_;
   std::unordered_map<std::string, std::function<void(void)>> function_map_;
   ros::Rate rate_;
-  ros::ServiceServer start_server_, suspend_server_; 
+  ros::ServiceServer start_server_, suspend_server_, skip_server_; 
   ros::Subscriber cmd_vel_sub_;
   ros::Publisher visualization_wp_pub_;
   ros::Publisher nav_vel_pub;
@@ -106,12 +107,12 @@ WaypointNav::WaypointNav() :
   function_map_.insert(std::make_pair("white_line", std::bind(&WaypointNav::white_line, this)));
 
   visualization_wp_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("visualization_wp", 1);
-  nav_vel_pub = nh_.advertise<geometry_msgs::Twist>("nav_vel", 1);
-  start_white_line = nh_.advertise<std_msgs::Bool>("white_line", 1);
+  start_white_line = nh_.advertise<std_msgs::Bool>("start_white", 1);
 
   cmd_vel_sub_ = nh_.subscribe("cmd_vel", 1, &WaypointNav::cmdVelCallback, this);//cmd_vel or icart_mini/cmd_vel
   start_server_ = nh_.advertiseService("start_wp_nav", &WaypointNav::startNavigationCallback, this);
   suspend_server_ = nh_.advertiseService("suspend_wp_nav", &WaypointNav::suspendNavigationCallback, this);
+  skip_server_ = nh_.advertiseService("skip_wp_nav", &WaypointNav::skipNavigationCallback, this);
   clear_costmaps_srv_ = nh_.serviceClient<std_srvs::Empty>("/move_base/clear_costmaps");
   timer_ = nh_.createTimer(ros::Duration(0.1),&WaypointNav::timerCallback,this);
 }
@@ -300,7 +301,6 @@ void WaypointNav::cmdVelCallback(const geometry_msgs::Twist::Ptr& cmd_vel_msg){
   else{
     last_moved_time_ = ros::Time::now().toSec();
   }
-  nav_vel_msg = cmd_vel_msg;
 }
 
 bool WaypointNav::startNavigationCallback(std_srvs::Trigger::Request &request, std_srvs::Trigger::Response &response){
@@ -332,6 +332,14 @@ bool WaypointNav::suspendNavigationCallback(std_srvs::Trigger::Request &request,
     return false;
   }
   return true;
+}
+bool WaypointNav::skipNavigationCallback(std_srvs::Trigger::Request &request, std_srvs::Trigger::Response &response) {
+	ROS_INFO("Skiping current waypoint!!");
+	response.success = true;
+	response.message = std::string("skip waypoint");
+	current_waypoint_++;
+  //send_wp();
+	
 }
 
 void WaypointNav::timerCallback(const ros::TimerEvent& e){
@@ -392,14 +400,6 @@ void WaypointNav::white_line(){
   num.data=1;
   f.data=true;
   start_white_line.publish(f);
-}
-
-void WaypointNav::end_supend(){
-  //cmd_vel受け取って,nav_velとしてリマップして渡す
-  //suspend_flg
-  suspend_flg_ = false;
-  run();
-  nav_vel_pub.publish(nav_vel_msg);
 }
 
 int main(int argc, char** argv){
