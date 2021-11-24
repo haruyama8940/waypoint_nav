@@ -396,7 +396,7 @@ void WaypointNav::suspend(){
 void WaypointNav::white_line(){
   std_msgs::Int8 num;
   std_msgs::Bool f;
-  suspend();
+  run();
   num.data=1;
   f.data=true;
   start_white_line.publish(f);
