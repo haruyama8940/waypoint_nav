@@ -82,13 +82,14 @@ private:
   tf2_ros::TransformListener tfListener_;
   std_msgs::Int8MultiArray cmd_data;
   //joy_cmd::dir_cmd_msg cmd_data;
-  std::vector<std::string> cmd_list = {"go_stright","turn_right","turn_left"};
+  std::vector<std::string> cmd_list = {"continue","go_stright","turn_right","turn_left"};
 //std::array<int,3> data{0,0,0};
   std::vector<std::vector<int>> list_data={{1,0,0},{0,1,0},{0,0,1}};
-  int list[3][3]={
-                {100,0,0},
-                {0,100,0},
-                {0,0,100},
+  int list[4][4]={
+                {100,0,0,0},
+                {0,100,0,0},
+                {0,0,100,0},
+                {0,0,0,100},
                 };
 
 };
@@ -376,14 +377,12 @@ void WaypointNav::run(){
   while((resend_num < resend_thresh_) && ros::ok()){
     double time = ros::Time::now().toSec();
     actionlib::SimpleClientGoalState state_ = move_base_action_.getState();
-    int rand =get_rand_range(0,2);
+
       //cmd_data.cmd_word=cmd_list[rand];
-     for ( i = 0; i < 3; i++)
+     for ( i = 0; i < 4; i++)
       {
-      //cmd_data.cmd_array[i]=list[rand][i];
-      cmd_data.data[i]=list[rand][i];
+      cmd_data.data[i]=list[0][i];
       }
-      //joy_pub.publish(cmd_data);
       cmd_data_pub.publish(cmd_data);
     if(time - last_moved_time_ > wait_time_){
       ROS_WARN("Robot can't reach this waypoint");
@@ -441,9 +440,9 @@ int resend_num = 0;
     double time = ros::Time::now().toSec();
     actionlib::SimpleClientGoalState state_ = move_base_action_.getState();
     //cmd_data.cmd_word=cmd_list[0];
-     for ( i = 0; i < 3; i++){
+     for ( i = 0; i < 4; i++){
       //cmd_data.cmd_array[i]=list[0][i];
-      cmd_data.data[i]=list[0][i];
+      cmd_data.data[i]=list[1][i];
       
       }
       cmd_data_pub.publish(cmd_data);
@@ -485,9 +484,9 @@ int resend_num = 0;
     actionlib::SimpleClientGoalState state_ = move_base_action_.getState();
 
     // cmd_data.cmd_word=cmd_list[1];
-     for ( i = 0; i < 3; i++){
+     for ( i = 0; i < 4; i++){
       // cmd_data.cmd_array[i]=list[1][i];
-      cmd_data.data[i]=list[1][i];
+      cmd_data.data[i]=list[2][i];
       // cmd_data.data = cmd_list[1][i];
       }
       // joy_pub.publish(cmd_data);
@@ -530,9 +529,9 @@ int resend_num = 0;
     actionlib::SimpleClientGoalState state_ = move_base_action_.getState();
 
     // cmd_data.cmd_word=cmd_list[2];
-     for ( i = 0; i < 3; i++){
+     for ( i = 0; i < 4; i++){
       // cmd_data.cmd_array[i]=list[2][i];
-      cmd_data.data[i]=list[2][i];
+      cmd_data.data[i]=list[3][i];
       }
       //joy_pub.publish(cmd_data);
       cmd_data_pub.publish(cmd_data);
