@@ -84,10 +84,11 @@ private:
   //joy_cmd::dir_cmd_msg cmd_data;
   std::vector<std::string> cmd_list = {"go_stright","turn_right","turn_left"};
 //std::array<int,3> data{0,0,0};
+  std::vector<std::vector<int>> list_data={{1,0,0},{0,1,0},{0,0,1}};
   int list[3][3]={
-                {1,0,0},
-                {0,1,0},
-                {0,0,1},
+                {100,0,0},
+                {0,100,0},
+                {0,0,100},
                 };
 
 };
@@ -97,7 +98,7 @@ WaypointNav::WaypointNav() :
     pnh_("~"),
     move_base_action_("move_base", true),
     rate_(1.0),
-    loop_flg_(false),
+    loop_flg_(true),
     suspend_flg_(true),
     tfListener_(tfBuffer_),
     last_moved_time_(ros::Time::now().toSec()),
@@ -113,7 +114,7 @@ WaypointNav::WaypointNav() :
   pnh_.param("filename", filename_, filename_);
   pnh_.param("dist_err", dist_err_, 1.0);
 
-  pnh_.param("loop_flg", loop_flg_, false);
+  pnh_.param("loop_flg", loop_flg_, true);
   pnh_.param("wait_time", wait_time_, 5.0);
   pnh_.param("resend_thresh", resend_thresh_, 3);
 
@@ -132,7 +133,7 @@ WaypointNav::WaypointNav() :
   clear_costmaps_srv_ = nh_.serviceClient<std_srvs::Empty>("/move_base/clear_costmaps");
   timer_ = nh_.createTimer(ros::Duration(0.1),&WaypointNav::timerCallback,this);
   reset_pub=nh_.advertise<std_msgs::Bool>("reset_pose",1);
-  cmd_data_pub = nh_.advertise<std_msgs::Int8MultiArray >("cmd_data", 10);
+  cmd_data_pub = nh_.advertise<std_msgs::Int8MultiArray >("cmd_data", 1);
   cmd_data.data.resize(3);
   //joy_pub = nh_.advertise<joy_cmd::dir_cmd_msg>("cmd_data", 10);
 }
@@ -487,7 +488,7 @@ int resend_num = 0;
      for ( i = 0; i < 3; i++){
       // cmd_data.cmd_array[i]=list[1][i];
       cmd_data.data[i]=list[1][i];
-
+      // cmd_data.data = cmd_list[1][i];
       }
       // joy_pub.publish(cmd_data);
       cmd_data_pub.publish(cmd_data);
