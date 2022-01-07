@@ -82,7 +82,7 @@ private:
   tf2_ros::TransformListener tfListener_;
   std_msgs::Int8MultiArray cmd_data;
   //joy_cmd::dir_cmd_msg cmd_data;
-  std::vector<std::string> cmd_list = {"continue","go_stright","turn_right","turn_left"};
+  std::vector<std::string> cmd_list = {"continue","go_straight","turn_right","turn_left"};
 //std::array<int,3> data{0,0,0};
   std::vector<std::vector<int>> list_data={{1,0,0},{0,1,0},{0,0,1}};
   int list[4][4]={
