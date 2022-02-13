@@ -1,6 +1,6 @@
 # waypoint_nav
 This program enables you to execute waypoint navigation.
-
+Provide a path plan and target direction.
 ## Feature
 - infinite loop
 - enroling functions in yaml
@@ -68,9 +68,15 @@ See this [sample.yaml](https://github.com/tiger0421/waypoint_nav/blob/main/confi
 - run  
   This is normal mode.  
   When your robot gets at target waypoint, makes for next waypoint.
-
+  Publish target direction:continue
 - suspend  
   This makes your robot suspend mode after moving.
+- run_go
+  Publish target direction:go_straight
+- run_left
+  Publish target direction:go_left
+- run_right
+  Publish target direction:go_right
 
 ## Suspend Mode
 When you want a robot to start or resume navigation, call `rosservice` like below.  
@@ -82,10 +88,3 @@ When you want a robot to set suspend mode, call `rosservice` like below.
 `
 $ rosservice call /suspend_wp_nav "{}"
 `
-
-## Movie
-- loop version  
-https://youtu.be/5eXg1V7NM3A
-
-- an obstacle on a waypoint  
-https://youtu.be/TDLN0mZlM6w
