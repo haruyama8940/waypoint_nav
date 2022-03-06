@@ -13,3 +13,4 @@ waypoints:
         x: 6.105
         y: -0.367
         z: 0.00
+        function: suspend

@@ -1,5 +1,6 @@
 #include <ros/ros.h>
 #include <std_srvs/Trigger.h>
+#include <std_srvs/SetBool.h>
 #include <std_srvs/Empty.h>
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/PoseArray.h>
@@ -51,10 +52,7 @@ public:
 // declear functions which is called by depending on "function" in yaml
   void run();
   void suspend();
-  void reset();
-  void run_go();
-  void run_right();
-  void run_left();
+  void change();
 
 private:
   actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> move_base_action_;
@@ -76,7 +74,7 @@ private:
   ros::Publisher reset_pub;
   //ros::Publisher joy_pub;
   ros::Publisher cmd_data_pub;
-    ros::ServiceClient clear_costmaps_srv_;
+    ros::ServiceClient clear_costmaps_srv_,change_map_srv;
   ros::Timer timer_;
   tf2_ros::Buffer tfBuffer_;
   tf2_ros::TransformListener tfListener_;
@@ -121,17 +119,15 @@ WaypointNav::WaypointNav() :
 
   function_map_.insert(std::make_pair("run", std::bind(&WaypointNav::run, this)));
   function_map_.insert(std::make_pair("suspend", std::bind(&WaypointNav::suspend, this)));
-  function_map_.insert(std::make_pair("reset", std::bind(&WaypointNav::suspend, this)));
-  function_map_.insert(std::make_pair("run_go", std::bind(&WaypointNav::run_go, this)));
-  function_map_.insert(std::make_pair("run_right", std::bind(&WaypointNav::run_right, this)));
-  function_map_.insert(std::make_pair("run_left", std::bind(&WaypointNav::run_left, this)));
-
+  function_map_.insert(std::make_pair("change", std::bind(&WaypointNav::change, this)));
+  
   visualization_wp_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("visualization_wp", 1);
   cmd_vel_sub_ = nh_.subscribe("cmd_vel", 1, &WaypointNav::cmdVelCallback, this);
   start_server_ = nh_.advertiseService("start_wp_nav", &WaypointNav::startNavigationCallback, this);
   suspend_server_ = nh_.advertiseService("suspend_wp_nav", &WaypointNav::suspendNavigationCallback, this);
   send_wp_server_ = nh_.advertiseService("send_wp_nav", &WaypointNav::sendNavigationCallback, this);
   clear_costmaps_srv_ = nh_.serviceClient<std_srvs::Empty>("/move_base/clear_costmaps");
+  change_map_srv=nh_.serviceClient<std_srvs::SetBool>("change_call");
   timer_ = nh_.createTimer(ros::Duration(0.1),&WaypointNav::timerCallback,this);
   reset_pub=nh_.advertise<std_msgs::Bool>("reset_pose",1);
   cmd_data_pub = nh_.advertise<std_msgs::Int8MultiArray >("cmd_data", 1);
@@ -424,146 +420,17 @@ void WaypointNav::suspend(){
     suspend_flg_ = true;
   }
 }
-void WaypointNav::reset(){
+void WaypointNav::change(){
   std_msgs::Bool re;
   re.data=true;
-  // suspend();
-  ROS_INFO("reset!!");
-  reset_pub.publish(re);
+  std_srvs::SetBool::Request reqest;
+  std_srvs::SetBool::Response response;
+  change_map_srv.call(reqest,response);
+  ROS_INFO("change!!");
+  //reset_pub.publish(re);
   run();
 }
-void WaypointNav::run_go(){
-int resend_num = 0;
-  int i;
-  send_wp();
-  while((resend_num < resend_thresh_) && ros::ok()){
-    double time = ros::Time::now().toSec();
-    actionlib::SimpleClientGoalState state_ = move_base_action_.getState();
-    //cmd_data.cmd_word=cmd_list[0];
-     for ( i = 0; i < 4; i++){
-      //cmd_data.cmd_array[i]=list[0][i];
-      cmd_data.data[i]=list[1][i];
-      
-      }
-      cmd_data_pub.publish(cmd_data);
 
-    if(time - last_moved_time_ > wait_time_){
-      ROS_WARN("Robot can't reach this waypoint");
-      ROS_WARN("Resend this waypoint");
-      resend_num++;
-      send_wp();
-    }
-    else if( on_wp() || state_ == actionlib::SimpleClientGoalState::SUCCEEDED){
-      ROS_INFO("Reach target waypoint!");
-      ROS_INFO("Run next waypoint");
-      break;
-    }
-    else if(state_ == actionlib::SimpleClientGoalState::ACTIVE || 
-            state_ == actionlib::SimpleClientGoalState::PENDING){
-      ros::spinOnce();
-      rate_.sleep();
-    }
-    else{
-      ROS_WARN("Robot can't reach this waypoint");
-      ROS_WARN("Resend this waypoint");
-      resend_num++;
-      send_wp();
-    }
-  }
-  if(resend_num >= resend_thresh_){
-    ROS_ERROR("Cancel this waypoint because robot can't reach there");
-    move_base_action_.cancelAllGoals();
-  }
-}
-void WaypointNav::run_left(){
-int resend_num = 0;
-  int i;
-  send_wp();
-  while((resend_num < resend_thresh_) && ros::ok()){
-    double time = ros::Time::now().toSec();
-    actionlib::SimpleClientGoalState state_ = move_base_action_.getState();
-
-    // cmd_data.cmd_word=cmd_list[1];
-     for ( i = 0; i < 4; i++){
-      // cmd_data.cmd_array[i]=list[1][i];
-      cmd_data.data[i]=list[2][i];
-      // cmd_data.data = cmd_list[1][i];
-      }
-      // joy_pub.publish(cmd_data);
-      cmd_data_pub.publish(cmd_data);
-
-    if(time - last_moved_time_ > wait_time_){
-      ROS_WARN("Robot can't reach this waypoint");
-      ROS_WARN("Resend this waypoint");
-      resend_num++;
-      send_wp();
-    }
-    else if( on_wp() || state_ == actionlib::SimpleClientGoalState::SUCCEEDED){
-      ROS_INFO("Reach target waypoint!");
-      ROS_INFO("Run next waypoint");
-      break;
-    }
-    else if(state_ == actionlib::SimpleClientGoalState::ACTIVE || 
-            state_ == actionlib::SimpleClientGoalState::PENDING){
-      ros::spinOnce();
-      rate_.sleep();
-    }
-    else{
-      ROS_WARN("Robot can't reach this waypoint");
-      ROS_WARN("Resend this waypoint");
-      resend_num++;
-      send_wp();
-    }
-  }
-  if(resend_num >= resend_thresh_){
-    ROS_ERROR("Cancel this waypoint because robot can't reach there");
-    move_base_action_.cancelAllGoals();
-  }
-}
-void WaypointNav::run_right(){
-int resend_num = 0;
-  int i;
-  send_wp();
-  while((resend_num < resend_thresh_) && ros::ok()){
-    double time = ros::Time::now().toSec();
-    actionlib::SimpleClientGoalState state_ = move_base_action_.getState();
-
-    // cmd_data.cmd_word=cmd_list[2];
-     for ( i = 0; i < 4; i++){
-      // cmd_data.cmd_array[i]=list[2][i];
-      cmd_data.data[i]=list[3][i];
-      }
-      //joy_pub.publish(cmd_data);
-      cmd_data_pub.publish(cmd_data);
-    if(time - last_moved_time_ > wait_time_){
-      ROS_WARN("Robot can't reach this waypoint");
-      ROS_WARN("Resend this waypoint");
-      resend_num++;
-      send_wp();
-    }
-    else if( on_wp() || state_ == actionlib::SimpleClientGoalState::SUCCEEDED){
-      ROS_INFO("Reach target waypoint!");
-      ROS_INFO("Run next waypoint");
-      break;
-    }
-    else if(state_ == actionlib::SimpleClientGoalState::ACTIVE || 
-            state_ == actionlib::SimpleClientGoalState::PENDING){
-      
-      ros::spinOnce();
-      rate_.sleep();
-    }
-    else{
-      ROS_WARN("Robot can't reach this waypoint");
-      ROS_WARN("Resend this waypoint");
-      resend_num++;
-      send_wp();
-    }
-  }
-  if(resend_num >= resend_thresh_){
-    ROS_ERROR("Cancel this waypoint because robot can't reach there");
-    move_base_action_.cancelAllGoals();
-  }
-}
 int main(int argc, char** argv){
   ros::init(argc, argv, "waypoint_nav");
   WaypointNav wp_nav;

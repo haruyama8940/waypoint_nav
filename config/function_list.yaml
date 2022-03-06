@@ -1,1 +1,1 @@
-function_list: [run,suspend,reset,run_go,run_right,run_left]
+function_list: [run,suspend,change,]
