@@ -53,7 +53,8 @@ public:
   void run();
   void suspend();
   void change();
-  void change_1(),change_2(),change_3(),change_4(),change_5(),change_6(),change_7(),change_8(),change_9(),change_10();
+  void change_1(),change_2(),change_3();
+  // change_4(),change_5(),change_6(),change_7(),change_8(),change_9(),change_10();
 private:
   actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> move_base_action_;
   std::list<Waypoints> waypoints_;
@@ -119,17 +120,17 @@ WaypointNav::WaypointNav() :
 
   function_map_.insert(std::make_pair("run", std::bind(&WaypointNav::run, this)));
   function_map_.insert(std::make_pair("suspend", std::bind(&WaypointNav::suspend, this)));
-  function_map_.insert(std::make_pair("change", std::bind(&WaypointNav::change, this)));
+  //function_map_.insert(std::make_pair("change", std::bind(&WaypointNav::change, this)));
   function_map_.insert(std::make_pair("change_1", std::bind(&WaypointNav::change_1, this))); 
   function_map_.insert(std::make_pair("change_2", std::bind(&WaypointNav::change_2, this)));  
   function_map_.insert(std::make_pair("change_3", std::bind(&WaypointNav::change_3, this)));
-  function_map_.insert(std::make_pair("change_4", std::bind(&WaypointNav::change_4, this)));
-  function_map_.insert(std::make_pair("change_5", std::bind(&WaypointNav::change_5, this)));
-  function_map_.insert(std::make_pair("change_6", std::bind(&WaypointNav::change_6, this)));  
-  function_map_.insert(std::make_pair("change_7", std::bind(&WaypointNav::change_7, this)));
-  function_map_.insert(std::make_pair("change_8", std::bind(&WaypointNav::change_8, this)));
-  function_map_.insert(std::make_pair("change_9", std::bind(&WaypointNav::change_9, this)));
-  function_map_.insert(std::make_pair("change_10", std::bind(&WaypointNav::change_10, this)));
+  // function_map_.insert(std::make_pair("change_4", std::bind(&WaypointNav::change_4, this)));
+  // function_map_.insert(std::make_pair("change_5", std::bind(&WaypointNav::change_5, this)));
+  // function_map_.insert(std::make_pair("change_6", std::bind(&WaypointNav::change_6, this)));  
+  // function_map_.insert(std::make_pair("change_7", std::bind(&WaypointNav::change_7, this)));
+  // function_map_.insert(std::make_pair("change_8", std::bind(&WaypointNav::change_8, this)));
+  // function_map_.insert(std::make_pair("change_9", std::bind(&WaypointNav::change_9, this)));
+  // function_map_.insert(std::make_pair("change_10", std::bind(&WaypointNav::change_10, this)));
 
 
   visualization_wp_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("visualization_wp", 1);

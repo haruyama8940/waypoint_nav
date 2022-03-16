@@ -147,8 +147,7 @@ bool WaypointEditor::read_yaml(){
   }
 }
 
-bool 
-WaypointEditor::save_yaml(){
+bool WaypointEditor::save_yaml(){
         std::ofstream ofs(filename_.c_str(), std::ios::out);
         if(ofs){
             ofs << "waypoints:" << std::endl;
