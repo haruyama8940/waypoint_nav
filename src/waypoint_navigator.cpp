@@ -52,9 +52,9 @@ public:
 // declear functions which is called by depending on "function" in yaml
   void run();
   void suspend();
-  void change();
-  void change_1(),change_2(),change_3();
-  // change_4(),change_5(),change_6(),change_7(),change_8(),change_9(),change_10();
+  void change_0();
+  void change_1(),change_2(),change_3(),change_4(),change_5();
+  //,change_6(),change_7(),change_8(),change_9(),change_10();
 private:
   actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> move_base_action_;
   std::list<Waypoints> waypoints_;
@@ -120,12 +120,12 @@ WaypointNav::WaypointNav() :
 
   function_map_.insert(std::make_pair("run", std::bind(&WaypointNav::run, this)));
   function_map_.insert(std::make_pair("suspend", std::bind(&WaypointNav::suspend, this)));
-  //function_map_.insert(std::make_pair("change", std::bind(&WaypointNav::change, this)));
+  function_map_.insert(std::make_pair("change_0", std::bind(&WaypointNav::change_0, this)));
   function_map_.insert(std::make_pair("change_1", std::bind(&WaypointNav::change_1, this))); 
   function_map_.insert(std::make_pair("change_2", std::bind(&WaypointNav::change_2, this)));  
   function_map_.insert(std::make_pair("change_3", std::bind(&WaypointNav::change_3, this)));
-  // function_map_.insert(std::make_pair("change_4", std::bind(&WaypointNav::change_4, this)));
-  // function_map_.insert(std::make_pair("change_5", std::bind(&WaypointNav::change_5, this)));
+  function_map_.insert(std::make_pair("change_4", std::bind(&WaypointNav::change_4, this)));
+  function_map_.insert(std::make_pair("change_5", std::bind(&WaypointNav::change_5, this)));
   // function_map_.insert(std::make_pair("change_6", std::bind(&WaypointNav::change_6, this)));  
   // function_map_.insert(std::make_pair("change_7", std::bind(&WaypointNav::change_7, this)));
   // function_map_.insert(std::make_pair("change_8", std::bind(&WaypointNav::change_8, this)));
@@ -444,7 +444,9 @@ void WaypointNav::change_call(int map_num){
   //reset_pub.publish(re);
   run();
 }
-
+void WaypointNav::change_0(){
+  change_call(0);
+}
 void WaypointNav::change_1(){
   change_call(1);
 }
@@ -456,7 +458,12 @@ void WaypointNav::change_2(){
 void WaypointNav::change_3(){
   change_call(3);
 }
-
+void WaypointNav::change_4(){
+  change_call(4);
+}
+void WaypointNav::change_5(){
+  change_call(5);
+}
 int main(int argc, char** argv){
   ros::init(argc, argv, "waypoint_nav");
   WaypointNav wp_nav;
