@@ -52,6 +52,7 @@ public:
 // declear functions which is called by depending on "function" in yaml
   void run();
   void suspend();
+  void white();
   void change_0();
   void change_1(),change_2(),change_3(),change_4(),change_5();
   //,change_6(),change_7(),change_8(),change_9(),change_10();
@@ -75,7 +76,7 @@ private:
   ros::Publisher reset_pub;
   //ros::Publisher joy_pub;
   ros::Publisher cmd_data_pub;
-    ros::ServiceClient clear_costmaps_srv_,change_map_srv;
+    ros::ServiceClient clear_costmaps_srv_,change_map_srv,white_call;
   ros::Timer timer_;
   tf2_ros::Buffer tfBuffer_;
   tf2_ros::TransformListener tfListener_;
@@ -120,6 +121,7 @@ WaypointNav::WaypointNav() :
 
   function_map_.insert(std::make_pair("run", std::bind(&WaypointNav::run, this)));
   function_map_.insert(std::make_pair("suspend", std::bind(&WaypointNav::suspend, this)));
+  function_map_.insert(std::make_pair("white", std::bind(&WaypointNav::white, this)));
   function_map_.insert(std::make_pair("change_0", std::bind(&WaypointNav::change_0, this)));
   function_map_.insert(std::make_pair("change_1", std::bind(&WaypointNav::change_1, this))); 
   function_map_.insert(std::make_pair("change_2", std::bind(&WaypointNav::change_2, this)));  
@@ -140,6 +142,7 @@ WaypointNav::WaypointNav() :
   send_wp_server_ = nh_.advertiseService("send_wp_nav", &WaypointNav::sendNavigationCallback, this);
   clear_costmaps_srv_ = nh_.serviceClient<std_srvs::Empty>("/move_base/clear_costmaps");
   change_map_srv=nh_.serviceClient<std_srvs::SetBool>("change_call");
+  white_call=nh_.serviceClient<std_srvs::Trigger>("start_detect");
   timer_ = nh_.createTimer(ros::Duration(0.1),&WaypointNav::timerCallback,this);
   reset_pub=nh_.advertise<std_msgs::Bool>("reset_pose",1);
   cmd_data_pub = nh_.advertise<std_msgs::Int8MultiArray >("cmd_data", 1);
@@ -432,7 +435,13 @@ void WaypointNav::suspend(){
     suspend_flg_ = true;
   }
 }
-
+void WaypointNav::white(){
+  std_srvs::Trigger::Request req_white;
+  std_srvs::Trigger::Response resp_white;
+  suspend();
+  sleep(1);
+  white_call.call(req_white,resp_white);
+}
 void WaypointNav::change_call(int map_num){
   // std_msgs::Bool re;
   // re.data=true;
