@@ -1,6 +1,7 @@
 #include <ros/ros.h>
 #include <std_srvs/Trigger.h>
 #include <std_srvs/Empty.h>
+#include <std_srvs/SetBool.h>
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/PoseArray.h>
 #include <geometry_msgs/Twist.h>
@@ -43,9 +44,10 @@ public:
   void cmdVelCallback(const geometry_msgs::Twist::ConstPtr& cmd_vel_msg);
   void timerCallback(const ros::TimerEvent& e);
   bool startNavigationCallback(std_srvs::Trigger::Request &request, std_srvs::Trigger::Response &response);
+  bool sendcmddirCallback(std_srvs::SetBool::Request &request, std_srvs::SetBool::Response &response);
   bool suspendNavigationCallback(std_srvs::Trigger::Request &request, std_srvs::Trigger::Response &response);
   bool sendNavigationCallback(std_srvs::Trigger::Request &request, std_srvs::Trigger::Response &response);
-  
+  void send_cmd_dir(std::string cmd_dir_type);
   uint64_t get_rand_range( uint64_t min_vel, uint64_t max_vel );
 // declear functions which is called by depending on "function" in yaml
   void run();
@@ -61,15 +63,18 @@ private:
   decltype(waypoints_)::iterator current_waypoint_;
   std::string robot_frame_, world_frame_;
   std::string filename_;
+  std::string cmd_send_data;
   bool loop_flg_;
   bool suspend_flg_;
+  bool cmd_send_flg_;
+  bool reset_flg_;
   double dist_err_;
   double last_moved_time_;
   double wait_time_;
   int resend_thresh_;
   std::unordered_map<std::string, std::function<void(void)>> function_map_;
   ros::Rate rate_;
-  ros::ServiceServer start_server_, suspend_server_,send_wp_server_; 
+  ros::ServiceServer start_server_, suspend_server_,send_wp_server_,send_cmd_dir_server_; 
   ros::Subscriber cmd_vel_sub_;
   ros::Publisher visualization_wp_pub_;
   ros::Publisher reset_pub;
@@ -100,6 +105,7 @@ WaypointNav::WaypointNav() :
     rate_(1.0),
     loop_flg_(true),
     suspend_flg_(true),
+    cmd_send_flg_(true),
     tfListener_(tfBuffer_),
     last_moved_time_(ros::Time::now().toSec()),
     wait_time_(5.0),
@@ -128,6 +134,7 @@ WaypointNav::WaypointNav() :
   visualization_wp_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("visualization_wp", 1);
   cmd_vel_sub_ = nh_.subscribe("cmd_vel", 1, &WaypointNav::cmdVelCallback, this);
   start_server_ = nh_.advertiseService("start_wp_nav", &WaypointNav::startNavigationCallback, this);
+  send_cmd_dir_server_ = nh_.advertiseService("send_cmd_dir", &WaypointNav::sendcmddirCallback, this);
   suspend_server_ = nh_.advertiseService("suspend_wp_nav", &WaypointNav::suspendNavigationCallback, this);
   send_wp_server_ = nh_.advertiseService("send_wp_nav", &WaypointNav::sendNavigationCallback, this);
   clear_costmaps_srv_ = nh_.serviceClient<std_srvs::Empty>("/move_base/clear_costmaps");
@@ -179,7 +186,38 @@ bool WaypointNav::read_yaml(){
     return false;
   }
 }
-
+void WaypointNav::send_cmd_dir(std::string cmd_dir_type){
+  if (cmd_send_flg_ == true){
+    if (cmd_dir_type == "continue"){
+        std::copy(std::begin(con_list),std::end(con_list),std::begin(cmd_data.data));
+        cmd_data_pub.publish(cmd_data);
+    }
+    if (cmd_dir_type == "go_straight"){
+        std::copy(std::begin(str_list),std::end(str_list),std::begin(cmd_data.data));
+        cmd_data_pub.publish(cmd_data);
+    }
+    if (cmd_dir_type == "turn_left"){
+        std::copy(std::begin(left_list),std::end(left_list),std::begin(cmd_data.data));
+        cmd_data_pub.publish(cmd_data);
+    }
+    if (cmd_dir_type == "turn_right"){
+        std::copy(std::begin(right_list),std::end(right_list),std::begin(cmd_data.data));
+        cmd_data_pub.publish(cmd_data);
+    }
+    
+  }
+  else if (cmd_send_flg_ == false){
+    if (reset_flg_)
+    {
+      cmd_data.data ={0,0,0,0};
+      cmd_data_pub.publish(cmd_data);
+      reset_flg_ = false;
+    }
+    
+    
+  }
+  
+}
 void WaypointNav::compute_orientation(){
   decltype(waypoints_)::iterator it, it2;
   double goal_direction;
@@ -324,6 +362,33 @@ void WaypointNav::cmdVelCallback(const geometry_msgs::Twist::ConstPtr& cmd_vel_m
   }
 }
 
+bool WaypointNav::sendcmddirCallback(std_srvs::SetBool::Request &request, std_srvs::SetBool::Response &response){
+  cmd_send_flg_  = request.data;
+  if (request.data)
+  {
+    ROS_INFO("cmd_dir send mode!");
+    response.success = true;
+    response.message = std::string("cmd_dir send mode!");
+
+  }
+
+  else
+    ROS_ERROR("stop cmd_dir_send mode");
+    response.success = false;
+    reset_flg_ = true;
+  // if(cmd_send_flg_  == false){
+  //   ROS_INFO("cmd_dir send mode!");
+  //   response.success = true;
+  //   response.message = std::string("cmd_dir send mode!");
+  //   cmd_send_flg_ = true;
+  // }
+  // else{
+  //   ROS_ERROR("stop cmd_dir_send mode");
+  //   response.success = false;
+  //   cmd_send_flg_ =false;
+  // }
+  return true;
+}
 bool WaypointNav::startNavigationCallback(std_srvs::Trigger::Request &request, std_srvs::Trigger::Response &response){
   if(suspend_flg_ == true){
     ROS_INFO("Cancel suspend mode!");
@@ -357,6 +422,7 @@ bool WaypointNav::suspendNavigationCallback(std_srvs::Trigger::Request &request,
 bool WaypointNav::sendNavigationCallback(std_srvs::Trigger::Request &request, std_srvs::Trigger::Response &response){
   current_waypoint_++;
   send_wp();
+  return true;
 }
 void WaypointNav::timerCallback(const ros::TimerEvent& e){
   visualize_wp();
@@ -381,8 +447,10 @@ void WaypointNav::run(){
     // {
     //   cmd_data.data[i]=list[0][i];
     // }
-    std::copy(std::begin(con_list),std::end(con_list),std::begin(cmd_data.data));
-    cmd_data_pub.publish(cmd_data);
+    // std::copy(std::begin(con_list),std::end(con_list),std::begin(cmd_data.data));
+    // cmd_data_pub.publish(cmd_data);
+    cmd_send_data ="continue";
+    send_cmd_dir(cmd_send_data);
     if(time - last_moved_time_ > wait_time_){
       ROS_WARN("Robot can't reach this waypoint");
       ROS_WARN("Resend this waypoint");
@@ -441,8 +509,8 @@ void WaypointNav::run_go(){
     // for ( i = 0; i < 4; i++){
     //   cmd_data.data[i]=list[1][i];
     // }
-    std::copy(std::begin(str_list),std::end(str_list),std::begin(cmd_data.data));
-    cmd_data_pub.publish(cmd_data);
+    cmd_send_data = "go_straight";
+    send_cmd_dir(cmd_send_data);
 
     if(time - last_moved_time_ > wait_time_){
       ROS_WARN("Robot can't reach this waypoint");
@@ -483,8 +551,9 @@ int resend_num = 0;
     // for ( i = 0; i < 4; i++){
     //   cmd_data.data[i]=list[2][i];
     // }
-    std::copy(std::begin(left_list),std::end(left_list),std::begin(cmd_data.data));
-    cmd_data_pub.publish(cmd_data);
+    
+    cmd_send_data = "turn_left";
+    send_cmd_dir(cmd_send_data);
 
     if(time - last_moved_time_ > wait_time_){
       ROS_WARN("Robot can't reach this waypoint");
@@ -525,8 +594,8 @@ int resend_num = 0;
     // for ( i = 0; i < 4; i++){
     //   cmd_data.data[i]=list[3][i];
     // }
-    std::copy(std::begin(right_list),std::end(right_list),std::begin(cmd_data.data));
-    cmd_data_pub.publish(cmd_data);
+    cmd_send_data = "turn_left";
+    send_cmd_dir(cmd_send_data);
     if(time - last_moved_time_ > wait_time_){
       ROS_WARN("Robot can't reach this waypoint");
       ROS_WARN("Resend this waypoint");
