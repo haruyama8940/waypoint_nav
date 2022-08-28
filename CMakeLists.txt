@@ -99,6 +99,20 @@ target_link_libraries(
     ${yaml-cpp_LIBRARIES}
 )
 
+add_executable(waypoint_navigator_with_direction src/waypoint_navigator_with_direction.cpp)
+target_link_libraries(
+    waypoint_navigator_with_direction
+    ${catkin_LIBRARIES}
+    ${yaml-cpp_LIBRARIES}
+)
+
+add_executable(waypoint_navigator_with_direction_switch src/waypoint_navigator_with_direction_switch.cpp)
+target_link_libraries(
+    waypoint_navigator_with_direction_switch
+    ${catkin_LIBRARIES}
+    ${yaml-cpp_LIBRARIES}
+)
+
 add_executable(waypoint_saver src/waypoint_saver.cpp)
 target_link_libraries(
     waypoint_saver
