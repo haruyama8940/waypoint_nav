@@ -86,16 +86,11 @@ private:
   std_msgs::Int8MultiArray cmd_data;
   std::vector<std::string> cmd_list = {"continue","go_straight","turn_right","turn_left"};
   std::vector<std::vector<int>> list_data={{1,0,0},{0,1,0},{0,0,1}};
-  int list[4][4]={
-                {100,0,0,0},
-                {0,100,0,0},
-                {0,0,100,0},
-                {0,0,0,100},
-                };
-  int con_list[4] = {100,0,0,0};
-  int str_list[4] = {0,100,0,0};
-  int left_list[4] = {0,0,100,0};
-  int right_list[4] = {0,0,0,100};
+  
+  //int con_list[4] = {1,0,0,0};
+  int str_list[3] = {1,0,0};
+  int left_list[3] = {0,1,0};
+  int right_list[3] = {0,0,1};
 };
 
 WaypointNav::WaypointNav() :
@@ -141,7 +136,7 @@ WaypointNav::WaypointNav() :
   timer_ = nh_.createTimer(ros::Duration(0.1),&WaypointNav::timerCallback,this);
   reset_pub=nh_.advertise<std_msgs::Bool>("reset_pose",1);
   cmd_data_pub = nh_.advertise<std_msgs::Int8MultiArray >("cmd_dir", 1);
-  cmd_data.data.resize(4);
+  cmd_data.data.resize(3);
 }
 
 bool WaypointNav::read_yaml(){
@@ -189,7 +184,7 @@ bool WaypointNav::read_yaml(){
 void WaypointNav::send_cmd_dir(std::string cmd_dir_type){
   if (cmd_send_flg_ == true){
     if (cmd_dir_type == "continue"){
-        std::copy(std::begin(con_list),std::end(con_list),std::begin(cmd_data.data));
+        std::copy(std::begin(str_list),std::end(str_list),std::begin(cmd_data.data));
         cmd_data_pub.publish(cmd_data);
     }
     if (cmd_dir_type == "go_straight"){
@@ -209,7 +204,7 @@ void WaypointNav::send_cmd_dir(std::string cmd_dir_type){
   else if (cmd_send_flg_ == false){
     if (reset_flg_)
     {
-      cmd_data.data ={0,0,0,0};
+      cmd_data.data ={0,0,0};
       cmd_data_pub.publish(cmd_data);
       reset_flg_ = false;
     }
@@ -443,12 +438,6 @@ void WaypointNav::run(){
     double time = ros::Time::now().toSec();
     actionlib::SimpleClientGoalState state_ = move_base_action_.getState();
 
-    // for ( i = 0; i < 4; i++)
-    // {
-    //   cmd_data.data[i]=list[0][i];
-    // }
-    // std::copy(std::begin(con_list),std::end(con_list),std::begin(cmd_data.data));
-    // cmd_data_pub.publish(cmd_data);
     cmd_send_data ="continue";
     send_cmd_dir(cmd_send_data);
     if(time - last_moved_time_ > wait_time_){
@@ -506,9 +495,6 @@ void WaypointNav::run_go(){
   while((resend_num < resend_thresh_) && ros::ok()){
     double time = ros::Time::now().toSec();
     actionlib::SimpleClientGoalState state_ = move_base_action_.getState();
-    // for ( i = 0; i < 4; i++){
-    //   cmd_data.data[i]=list[1][i];
-    // }
     cmd_send_data = "go_straight";
     send_cmd_dir(cmd_send_data);
 
@@ -548,10 +534,7 @@ int resend_num = 0;
     double time = ros::Time::now().toSec();
     actionlib::SimpleClientGoalState state_ = move_base_action_.getState();
 
-    // for ( i = 0; i < 4; i++){
-    //   cmd_data.data[i]=list[2][i];
-    // }
-    
+
     cmd_send_data = "turn_left";
     send_cmd_dir(cmd_send_data);
 
@@ -591,10 +574,8 @@ int resend_num = 0;
     double time = ros::Time::now().toSec();
     actionlib::SimpleClientGoalState state_ = move_base_action_.getState();
 
-    // for ( i = 0; i < 4; i++){
-    //   cmd_data.data[i]=list[3][i];
-    // }
-    cmd_send_data = "turn_left";
+ 
+    cmd_send_data = "turn_right";
     send_cmd_dir(cmd_send_data);
     if(time - last_moved_time_ > wait_time_){
       ROS_WARN("Robot can't reach this waypoint");
