@@ -1,1 +1,1 @@
-function_list: [run,suspend,hoge]
+function_list: [run,suspend,run_go_straight_road,run_go_3way,run_go_cross_road,run_right_3way,run_right_cross_road,run_right_corridor,run_left_3way,run_left_cross_road,run_left_corridor]

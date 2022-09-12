@@ -47,6 +47,17 @@ endif()
 
 add_definitions(-DQT_NO_KEYWORDS)
 
+
+add_message_files(
+  FILES
+  cmd_dir_intersection.msg
+)
+
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+)
+
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES ${PROJECT_NAME}
@@ -105,10 +116,9 @@ target_link_libraries(
     ${catkin_LIBRARIES}
     ${yaml-cpp_LIBRARIES}
 )
-
-add_executable(waypoint_navigator_with_direction_switch src/waypoint_navigator_with_direction_switch.cpp)
+add_executable(waypoint_navigator_with_direction_intersection src/waypoint_navigator_with_direction_intersection.cpp)
 target_link_libraries(
-    waypoint_navigator_with_direction_switch
+    waypoint_navigator_with_direction_intersection
     ${catkin_LIBRARIES}
     ${yaml-cpp_LIBRARIES}
 )
