@@ -56,12 +56,12 @@ public:
   void suspend();
   void reset();
 
-  void run_go_3way();
+  void run_go_3_way();
   void run_go_cross_road();
-  void run_right_3way();
+  void run_right_3_way();
   void run_right_cross_road();
   void run_right_corridor();
-  void run_left_3way();
+  void run_left_3_way();
   void run_left_cross_road();
   void run_left_corridor();
 
@@ -98,10 +98,15 @@ private:
   std::vector<std::string> cmd_list = {"continue","go_straight","turn_right","turn_left"};
   std::vector<std::vector<int>> list_data={{1,0,0},{0,1,0},{0,0,1}};
   
-  //int con_list[4] = {1,0,0,0};
-  int str_list[3] = {1,0,0};
-  int left_list[3] = {0,1,0};
-  int right_list[3] = {0,0,1};
+  int con_list[4] = {1,0,0,0};
+  int str_list[4] = {0,1,0,0};
+  int left_list[4] = {0,0,1,0};
+  int right_list[4] = {0,0,0,1};
+
+  int straight_road_list[4] ={1,0,0,0};
+  int three_way_list[4]={0,1,0,0};
+  int cross_road_list[4]={0,0,1,0};
+  int corridor_list[4]={0,0,0,1};
 };
 
 WaypointNav::WaypointNav() :
@@ -133,12 +138,12 @@ WaypointNav::WaypointNav() :
   function_map_.insert(std::make_pair("run", std::bind(&WaypointNav::run, this)));
   function_map_.insert(std::make_pair("suspend", std::bind(&WaypointNav::suspend, this)));
   function_map_.insert(std::make_pair("reset", std::bind(&WaypointNav::suspend, this)));
-  function_map_.insert(std::make_pair("run_go_3way", std::bind(&WaypointNav::run_go_3way, this)));
+  function_map_.insert(std::make_pair("run_go_3_way", std::bind(&WaypointNav::run_go_3_way, this)));
   function_map_.insert(std::make_pair("run_go_cross_road", std::bind(&WaypointNav::run_go_cross_road, this)));
-  function_map_.insert(std::make_pair("run_right_3way", std::bind(&WaypointNav::run_right_3way, this)));
+  function_map_.insert(std::make_pair("run_right_3_way", std::bind(&WaypointNav::run_right_3_way, this)));
   function_map_.insert(std::make_pair("run_right_cross_road", std::bind(&WaypointNav::run_right_cross_road, this)));
   function_map_.insert(std::make_pair("run_right_corridor", std::bind(&WaypointNav::run_right_corridor, this)));
-  function_map_.insert(std::make_pair("run_left_3way", std::bind(&WaypointNav::run_left_3way, this)));
+  function_map_.insert(std::make_pair("run_left_3_way", std::bind(&WaypointNav::run_left_3_way, this)));
   function_map_.insert(std::make_pair("run_left_cross_road", std::bind(&WaypointNav::run_left_cross_road, this)));
   function_map_.insert(std::make_pair("run_left_corridor", std::bind(&WaypointNav::run_left_corridor, this)));
 
@@ -202,33 +207,36 @@ bool WaypointNav::read_yaml(){
 void WaypointNav::send_cmd_dir(std::string cmd_dir_type, std::string intersection_type){
   if (cmd_send_flg_ == true){
     if (cmd_dir_type == "continue"){
-        std::copy(std::begin(str_list),std::end(str_list),std::begin(cmd_data.cmd_dir));
-        cmd_data.intersection_label = 0;
+        std::copy(std::begin(con_list),std::end(con_list),std::begin(cmd_data.cmd_dir));
+        // cmd_data.intersection_label = 0;
     }
     if (cmd_dir_type == "go_straight"){
         std::copy(std::begin(str_list),std::end(str_list),std::begin(cmd_data.cmd_dir));
-        cmd_data.intersection_label = 1;
+        // cmd_data.intersection_label = 1;
     }
     if (cmd_dir_type == "turn_left"){
         std::copy(std::begin(left_list),std::end(left_list),std::begin(cmd_data.cmd_dir));
-        cmd_data.intersection_label = 2;
+        // cmd_data.intersection_label = 2;
     }
     if (cmd_dir_type == "turn_right"){
         std::copy(std::begin(right_list),std::end(right_list),std::begin(cmd_data.cmd_dir));
-        cmd_data.intersection_label= 3;
+        // cmd_data.intersection_label= 3;
     }
 
     if (intersection_type == "straight_road"){
-        cmd_data.intersection_label = 0;
+        std::copy(std::begin(straight_road_list),std::end(straight_road_list),std::begin(cmd_data.intersection_label));
+        //cmd_data.intersection_label = 0;
       }
     if (intersection_type == "3_way"){ 
-        cmd_data.intersection_label = 1;
+        std::copy(std::begin(three_way_list),std::end(three_way_list),std::begin(cmd_data.intersection_label));
       }
     if (intersection_type == "cross_road"){
-        cmd_data.intersection_label = 2;
+        std::copy(std::begin(cross_road_list),std::end(cross_road_list),std::begin(cmd_data.intersection_label));
+        // cmd_data.intersection_label = 2;
       }
     if (intersection_type == "corridor"){
-        cmd_data.intersection_label = 3;
+       std::copy(std::begin(corridor_list),std::end(corridor_list),std::begin(cmd_data.intersection_label));
+        //cmd_data.intersection_label = 3;
       }
      cmd_data_pub.publish(cmd_data);
   }
@@ -237,7 +245,7 @@ void WaypointNav::send_cmd_dir(std::string cmd_dir_type, std::string intersectio
     if (reset_flg_)
     {
       cmd_data.cmd_dir ={0,0,0,0};
-      cmd_data.intersection_label = 0;
+      cmd_data.intersection_label = {0,0,0,0};
       cmd_data_pub.publish(cmd_data);
       reset_flg_ = false;
     }
@@ -525,7 +533,7 @@ void WaypointNav::reset(){
   run();
 }
 
-void WaypointNav::run_go_3way(){
+void WaypointNav::run_go_3_way(){
   int resend_num = 0;
   int i;
   send_wp();
@@ -604,7 +612,7 @@ void WaypointNav::run_go_cross_road(){
   }
 }
 
-void WaypointNav::run_left_3way(){
+void WaypointNav::run_left_3_way(){
 int resend_num = 0;
   int i;
   send_wp();
@@ -614,7 +622,7 @@ int resend_num = 0;
 
 
     cmd_send_data = "turn_left";
-    intersection_label = "3way";
+    intersection_label = "3_way";
     send_cmd_dir(cmd_send_data,intersection_label);
 
     if(time - last_moved_time_ > wait_time_){
@@ -728,7 +736,7 @@ int resend_num = 0;
   }
 }
 
-void WaypointNav::run_right_3way(){
+void WaypointNav::run_right_3_way(){
 int resend_num = 0;
   int i;
   send_wp();
@@ -738,7 +746,7 @@ int resend_num = 0;
 
  
     cmd_send_data = "turn_right";
-    intersection_label = "3way";
+    intersection_label = "3_way";
     send_cmd_dir(cmd_send_data,intersection_label);
 
     if(time - last_moved_time_ > wait_time_){
