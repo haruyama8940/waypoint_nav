@@ -24,6 +24,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf2_ros
   rviz
   std_srvs
+  scenario_navigation_msgs
 )
 
 find_package(PkgConfig)

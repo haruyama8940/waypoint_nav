@@ -101,13 +101,13 @@ private:
   std::vector<std::vector<int>> list_data={{1,0,0},{0,1,0},{0,0,1}};
   
   // int con_list[4] = {1,0,0,0};
-  int str_list[3] = {1,0,0};
-  int left_list[3] = {0,1,0};
-  int right_list[3] = {0,0,1};
-  // int con_list[4] = {1,0,0,0};
-  // int str_list[4] = {0,1,0,0};
-  // int left_list[4] = {0,0,1,0};
-  // int right_list[4] = {0,0,0,1};
+  // int str_list[3] = {1,0,0};
+  // int left_list[3] = {0,1,0};
+  // int right_list[3] = {0,0,1};
+  int con_list[4] = {1,0,0,0};
+  int str_list[4] = {0,1,0,0};
+  int left_list[4] = {0,0,1,0};
+  int right_list[4] = {0,0,0,1};
   
   int straight_road_list[4] ={1,0,0,0};
   int three_way_list[4]={0,1,0,0};
