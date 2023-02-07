@@ -52,6 +52,7 @@ public:
   bool sendNavigationCallback(std_srvs::Trigger::Request &request, std_srvs::Trigger::Response &response);
   void send_cmd_dir(std::string cmd_dir_type, std::string intersection_type);
   uint64_t get_rand_range( uint64_t min_vel, uint64_t max_vel );
+  void loop_count_srv(int loop_count);
 // declear functions which is called by depending on "function" in yaml
   void run();
   void suspend();
@@ -81,6 +82,8 @@ private:
   double last_moved_time_;
   double wait_time_;
   int resend_thresh_;
+  int target_loop_count_;
+  int loop_count = 0;
   std::unordered_map<std::string, std::function<void(void)>> function_map_;
   ros::Rate rate_;
   ros::ServiceServer start_server_, suspend_server_,send_wp_server_,send_cmd_dir_server_; 
@@ -89,7 +92,7 @@ private:
   ros::Publisher reset_pub;
   ros::Publisher cmd_data_pub;
   ros::Publisher intersection_label_pub;
-  ros::ServiceClient clear_costmaps_srv_;
+  ros::ServiceClient clear_costmaps_srv_, send_loop_count_srv;
   ros::Timer timer_;
   tf2_ros::Buffer tfBuffer_;
   tf2_ros::TransformListener tfListener_;
@@ -126,12 +129,13 @@ WaypointNav::WaypointNav() :
     tfListener_(tfBuffer_),
     last_moved_time_(ros::Time::now().toSec()),
     wait_time_(5.0),
-    resend_thresh_(3)
+    resend_thresh_(3),
+    target_loop_count_(2)
 {
   pnh_.param("robot_frame", robot_frame_, std::string("base_link"));
   pnh_.param("world_frame", world_frame_, std::string("map"));
 
-  pnh_.param("max_update_rate", max_update_rate_, 1.0);
+  pnh_.param("max_update_rate", max_update_rate_, 5.0);
   ros::Rate rate_(max_update_rate_);
 
   pnh_.param("filename", filename_, filename_);
@@ -140,6 +144,7 @@ WaypointNav::WaypointNav() :
   pnh_.param("loop_flg", loop_flg_, true);
   pnh_.param("wait_time", wait_time_, 5.0);
   pnh_.param("resend_thresh", resend_thresh_, 3);
+  pnh_.param("target_loop_count",target_loop_count_, 2);
 
   function_map_.insert(std::make_pair("run", std::bind(&WaypointNav::run, this)));
   function_map_.insert(std::make_pair("suspend", std::bind(&WaypointNav::suspend, this)));
@@ -160,12 +165,12 @@ WaypointNav::WaypointNav() :
   suspend_server_ = nh_.advertiseService("suspend_wp_nav", &WaypointNav::suspendNavigationCallback, this);
   send_wp_server_ = nh_.advertiseService("send_wp_nav", &WaypointNav::sendNavigationCallback, this);
   clear_costmaps_srv_ = nh_.serviceClient<std_srvs::Empty>("/move_base/clear_costmaps");
+  send_loop_count_srv = nh_.serviceClient<std_srvs::SetBool>("/loop_count");
   timer_ = nh_.createTimer(ros::Duration(0.1),&WaypointNav::timerCallback,this);
   reset_pub=nh_.advertise<std_msgs::Bool>("reset_pose",1);
   //cmd_data_pub = nh_.advertise<std_msgs::Int8MultiArray >("cmd_dir", 1);
   // cmd_data_pub = nh_.advertise<waypoint_nav::cmd_dir_intersection>("cmd_dir_intersection",1);
   cmd_data_pub = nh_.advertise<scenario_navigation_msgs::cmd_dir_intersection>("cmd_dir_intersection",1);
-  //cmd_data.cmd_dir.resize(4);
   intersection_label_pub = nh_.advertise<std_msgs::Int8>("intersection_label",1);
 }
 
@@ -315,7 +320,16 @@ void WaypointNav::visualize_wp(){
   //ROS_INFO("Published waypoint marker");
   visualization_wp_pub_.publish(marker_wp);
 }
-
+void WaypointNav::loop_count_srv(int loop_count){
+  std_srvs::SetBool::Request req;
+  std_srvs::SetBool::Response res;
+  if (loop_count==target_loop_count_){
+    req.data = true;
+    send_loop_count_srv.call(req,res);
+  }
+  else
+    req.data = false;
+}
 void WaypointNav::run_wp(){
   while((move_base_action_.waitForServer(ros::Duration(1.0)) == false) && ros::ok()){
       ROS_INFO("Waiting...");
@@ -342,6 +356,8 @@ void WaypointNav::run_wp(){
     }
     if(loop_flg_){
       ROS_INFO("Start waypoint_nav again!");
+      loop_count++;
+      loop_count_srv(loop_count);
     }
   } while(ros::ok() && loop_flg_);
   ROS_INFO("Finish waypoint_nav");
