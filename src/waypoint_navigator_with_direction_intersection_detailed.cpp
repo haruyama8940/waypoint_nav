@@ -338,6 +338,7 @@ void WaypointNav::compute_orientation(){
 void WaypointNav::visualize_wp(){
   int cnt = 0;
   int waypoint_num = waypoints_.size();
+  /*
   geometry_msgs::Vector3 arrow; // config arrow shape
   // x is arrow length
   arrow.x = 1.0;
@@ -345,7 +346,12 @@ void WaypointNav::visualize_wp(){
   arrow.y = 0.1;
   // z is arrow height
   arrow.z = 0.2;
-
+  */
+ 
+  geometry_msgs::Vector3 scale;
+  scale.x = dist_err_;
+  scale.y = dist_err_;
+  scale.z = 0.1;
   visualization_msgs::MarkerArray marker_wp;
   marker_wp.markers.resize(waypoint_num);
   for(decltype(waypoints_)::iterator it = waypoints_.begin(); it != waypoints_.end(); cnt++, it++){
@@ -355,9 +361,11 @@ void WaypointNav::visualize_wp(){
     marker_wp.markers[cnt].id = cnt;
     marker_wp.markers[cnt].lifetime = ros::Duration();
 
-    marker_wp.markers[cnt].type = visualization_msgs::Marker::ARROW;
+    // marker_wp.markers[cnt].type = visualization_msgs::Marker::ARROW;
+    marker_wp.markers[cnt].type = visualization_msgs::Marker::CYLINDER;
     marker_wp.markers[cnt].action = visualization_msgs::Marker::ADD;
-    marker_wp.markers[cnt].scale= arrow;
+    // marker_wp.markers[cnt].scale= arrow;
+    marker_wp.markers[cnt].scale= scale;
     marker_wp.markers[cnt].pose = it->pose;
 
     marker_wp.markers[cnt].color.r = 0.0f;
