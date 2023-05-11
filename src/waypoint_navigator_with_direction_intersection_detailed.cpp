@@ -148,7 +148,7 @@ WaypointNav::WaypointNav() :
     last_moved_time_(ros::Time::now().toSec()),
     wait_time_(5.0),
     resend_thresh_(3),
-    target_loop_count_(3)
+    target_loop_count_(2)
 {
   pnh_.param("robot_frame", robot_frame_, std::string("base_link"));
   pnh_.param("world_frame", world_frame_, std::string("map"));
@@ -382,6 +382,7 @@ void WaypointNav::loop_count_srv(int loop_count){
   if (loop_count==target_loop_count_){
     req.data = true;
     send_loop_count_srv.call(req,res);
+    ROS_INFO("SUCCESS TARGET LOOP");
   }
   else
     req.data = false;
@@ -413,6 +414,7 @@ void WaypointNav::run_wp(){
     if(loop_flg_){
       ROS_INFO("Start waypoint_nav again!");
       loop_count++;
+      ROS_INFO("LOOP:%d",loop_count);
       loop_count_srv(loop_count);
     }
   } while(ros::ok() && loop_flg_);
@@ -555,7 +557,8 @@ void WaypointNav::run(){
   int i;
   send_wp();
   
-  while((resend_num < resend_thresh_) && ros::ok()){
+  // while((resend_num < resend_thresh_) && ros::ok()){
+  while(ros::ok()){
     double time = ros::Time::now().toSec();
     actionlib::SimpleClientGoalState state_ = move_base_action_.getState();
 
@@ -586,10 +589,10 @@ void WaypointNav::run(){
       send_wp();
     }
   }
-  if(resend_num >= resend_thresh_){
-    ROS_ERROR("Cancel this waypoint because robot can't reach there");
-    move_base_action_.cancelAllGoals();
-  }
+  // if(resend_num >= resend_thresh_){
+  //   ROS_ERROR("Cancel this waypoint because robot can't reach there");
+  //   move_base_action_.cancelAllGoals();
+  // }
 }
 
 void WaypointNav::suspend(){
@@ -617,7 +620,8 @@ void WaypointNav::run_stop_dead_end(){
   int i;
   send_wp();
   
-  while((resend_num < resend_thresh_) && ros::ok()){
+  // while((resend_num < resend_thresh_) && ros::ok()){
+  while(ros::ok()){
     double time = ros::Time::now().toSec();
     actionlib::SimpleClientGoalState state_ = move_base_action_.getState();
 
@@ -648,10 +652,10 @@ void WaypointNav::run_stop_dead_end(){
       send_wp();
     }
   }
-  if(resend_num >= resend_thresh_){
-    ROS_ERROR("Cancel this waypoint because robot can't reach there");
-    move_base_action_.cancelAllGoals();
-  }
+  // if(resend_num >= resend_thresh_){
+  //   ROS_ERROR("Cancel this waypoint because robot can't reach there");
+  //   move_base_action_.cancelAllGoals();
+  // }
 }
 
 void WaypointNav::run_right_corner_right(){
@@ -659,7 +663,8 @@ int resend_num = 0;
   int i;
   send_wp();
   
-  while((resend_num < resend_thresh_) && ros::ok()){
+  // while((resend_num < resend_thresh_) && ros::ok()){
+  while(ros::ok()){
     double time = ros::Time::now().toSec();
     actionlib::SimpleClientGoalState state_ = move_base_action_.getState();
 
@@ -690,10 +695,10 @@ int resend_num = 0;
       send_wp();
     }
   }
-  if(resend_num >= resend_thresh_){
-    ROS_ERROR("Cancel this waypoint because robot can't reach there");
-    move_base_action_.cancelAllGoals();
-  }
+  // if(resend_num >= resend_thresh_){
+  //   ROS_ERROR("Cancel this waypoint because robot can't reach there");
+  //   move_base_action_.cancelAllGoals();
+  // }
 }
 
 void WaypointNav::run_left_corner_left(){
@@ -701,7 +706,8 @@ void WaypointNav::run_left_corner_left(){
   int i;
   send_wp();
   
-  while((resend_num < resend_thresh_) && ros::ok()){
+  // while((resend_num < resend_thresh_) && ros::ok()){
+  while(ros::ok()){
     double time = ros::Time::now().toSec();
     actionlib::SimpleClientGoalState state_ = move_base_action_.getState();
 
@@ -732,10 +738,10 @@ void WaypointNav::run_left_corner_left(){
       send_wp();
     }
   }
-  if(resend_num >= resend_thresh_){
-    ROS_ERROR("Cancel this waypoint because robot can't reach there");
-    move_base_action_.cancelAllGoals();
-  }
+  // if(resend_num >= resend_thresh_){
+  //   ROS_ERROR("Cancel this waypoint because robot can't reach there");
+  //   move_base_action_.cancelAllGoals();
+  // }
 }
 
 void WaypointNav::run_go_cross_road(){
@@ -743,7 +749,8 @@ void WaypointNav::run_go_cross_road(){
   int i;
   send_wp();
   
-  while((resend_num < resend_thresh_) && ros::ok()){
+  // while((resend_num < resend_thresh_) && ros::ok()){
+  while(ros::ok()){
     double time = ros::Time::now().toSec();
     actionlib::SimpleClientGoalState state_ = move_base_action_.getState();
 
@@ -774,17 +781,18 @@ void WaypointNav::run_go_cross_road(){
       send_wp();
     }
   }
-  if(resend_num >= resend_thresh_){
-    ROS_ERROR("Cancel this waypoint because robot can't reach there");
-    move_base_action_.cancelAllGoals();
-  }
+  // if(resend_num >= resend_thresh_){
+  //   ROS_ERROR("Cancel this waypoint because robot can't reach there");
+  //   move_base_action_.cancelAllGoals();
+  // }
 }
 void WaypointNav::run_left_cross_road(){
 int resend_num = 0;
   int i;
   send_wp();
   
-  while((resend_num < resend_thresh_) && ros::ok()){
+  // while((resend_num < resend_thresh_) && ros::ok()){
+  while(ros::ok()){
     double time = ros::Time::now().toSec();
     actionlib::SimpleClientGoalState state_ = move_base_action_.getState();
 
@@ -815,17 +823,18 @@ int resend_num = 0;
       send_wp();
     }
   }
-  if(resend_num >= resend_thresh_){
-    ROS_ERROR("Cancel this waypoint because robot can't reach there");
-    move_base_action_.cancelAllGoals();
-  }
+  // if(resend_num >= resend_thresh_){
+  //   ROS_ERROR("Cancel this waypoint because robot can't reach there");
+  //   move_base_action_.cancelAllGoals();
+  // }
 }
 void WaypointNav::run_right_cross_road(){
   int resend_num = 0;
   int i;
   send_wp();
   
-  while((resend_num < resend_thresh_) && ros::ok()){
+  // while((resend_num < resend_thresh_) && ros::ok()){
+  while(ros::ok()){
     double time = ros::Time::now().toSec();
     actionlib::SimpleClientGoalState state_ = move_base_action_.getState();
 
@@ -856,10 +865,10 @@ void WaypointNav::run_right_cross_road(){
       send_wp();
     }
   }
-  if(resend_num >= resend_thresh_){
-    ROS_ERROR("Cancel this waypoint because robot can't reach there");
-    move_base_action_.cancelAllGoals();
-  }
+  // if(resend_num >= resend_thresh_){
+  //   ROS_ERROR("Cancel this waypoint because robot can't reach there");
+  //   move_base_action_.cancelAllGoals();
+  // }
 }
 
 void WaypointNav::run_go_3_way_right(){
@@ -867,7 +876,8 @@ int resend_num = 0;
   int i;
   send_wp();
   
-  while((resend_num < resend_thresh_) && ros::ok()){
+  // while((resend_num < resend_thresh_) && ros::ok()){
+  while(ros::ok()){
     double time = ros::Time::now().toSec();
     actionlib::SimpleClientGoalState state_ = move_base_action_.getState();
 
@@ -898,17 +908,18 @@ int resend_num = 0;
       send_wp();
     }
   }
-  if(resend_num >= resend_thresh_){
-    ROS_ERROR("Cancel this waypoint because robot can't reach there");
-    move_base_action_.cancelAllGoals();
-  }
+  // if(resend_num >= resend_thresh_){
+  //   ROS_ERROR("Cancel this waypoint because robot can't reach there");
+  //   move_base_action_.cancelAllGoals();
+  // }
 }
 void WaypointNav::run_right_3_way_right(){
   int resend_num = 0;
   int i;
   send_wp();
   
-  while((resend_num < resend_thresh_) && ros::ok()){
+  // while((resend_num < resend_thresh_) && ros::ok()){
+  while(ros::ok()){
     double time = ros::Time::now().toSec();
     actionlib::SimpleClientGoalState state_ = move_base_action_.getState();
 
@@ -939,10 +950,10 @@ void WaypointNav::run_right_3_way_right(){
       send_wp();
     }
   }
-  if(resend_num >= resend_thresh_){
-    ROS_ERROR("Cancel this waypoint because robot can't reach there");
-    move_base_action_.cancelAllGoals();
-  }
+  // if(resend_num >= resend_thresh_){
+  //   ROS_ERROR("Cancel this waypoint because robot can't reach there");
+  //   move_base_action_.cancelAllGoals();
+  // }
 }
 
 void WaypointNav::run_left_3_way_center(){
@@ -950,7 +961,8 @@ void WaypointNav::run_left_3_way_center(){
   int i;
   send_wp();
   
-  while((resend_num < resend_thresh_) && ros::ok()){
+  // while((resend_num < resend_thresh_) && ros::ok()){
+  while(ros::ok()){
     double time = ros::Time::now().toSec();
     actionlib::SimpleClientGoalState state_ = move_base_action_.getState();
 
@@ -981,17 +993,18 @@ void WaypointNav::run_left_3_way_center(){
       send_wp();
     }
   }
-  if(resend_num >= resend_thresh_){
-    ROS_ERROR("Cancel this waypoint because robot can't reach there");
-    move_base_action_.cancelAllGoals();
-  }
+  // if(resend_num >= resend_thresh_){
+  //   ROS_ERROR("Cancel this waypoint because robot can't reach there");
+  //   move_base_action_.cancelAllGoals();
+  // }
 }
 void WaypointNav::run_right_3_way_center(){
   int resend_num = 0;
   int i;
   send_wp();
   
-  while((resend_num < resend_thresh_) && ros::ok()){
+  // while((resend_num < resend_thresh_) && ros::ok()){
+  while(ros::ok()){
     double time = ros::Time::now().toSec();
     actionlib::SimpleClientGoalState state_ = move_base_action_.getState();
 
@@ -1022,10 +1035,10 @@ void WaypointNav::run_right_3_way_center(){
       send_wp();
     }
   }
-  if(resend_num >= resend_thresh_){
-    ROS_ERROR("Cancel this waypoint because robot can't reach there");
-    move_base_action_.cancelAllGoals();
-  }
+  // if(resend_num >= resend_thresh_){
+  //   ROS_ERROR("Cancel this waypoint because robot can't reach there");
+  //   move_base_action_.cancelAllGoals();
+  // }
 }
 
 void WaypointNav::run_go_3_way_left(){
@@ -1033,7 +1046,8 @@ void WaypointNav::run_go_3_way_left(){
   int i;
   send_wp();
   
-  while((resend_num < resend_thresh_) && ros::ok()){
+  // while((resend_num < resend_thresh_) && ros::ok()){
+  while(ros::ok()){
     double time = ros::Time::now().toSec();
     actionlib::SimpleClientGoalState state_ = move_base_action_.getState();
 
@@ -1064,17 +1078,18 @@ void WaypointNav::run_go_3_way_left(){
       send_wp();
     }
   }
-  if(resend_num >= resend_thresh_){
-    ROS_ERROR("Cancel this waypoint because robot can't reach there");
-    move_base_action_.cancelAllGoals();
-  }
+  // if(resend_num >= resend_thresh_){
+  //   ROS_ERROR("Cancel this waypoint because robot can't reach there");
+  //   move_base_action_.cancelAllGoals();
+  // }
 }
 void WaypointNav::run_left_3_way_left(){
   int resend_num = 0;
   int i;
   send_wp();
   
-  while((resend_num < resend_thresh_) && ros::ok()){
+  // while((resend_num < resend_thresh_) && ros::ok()){
+  while(ros::ok()){
     double time = ros::Time::now().toSec();
     actionlib::SimpleClientGoalState state_ = move_base_action_.getState();
 
@@ -1105,10 +1120,10 @@ void WaypointNav::run_left_3_way_left(){
       send_wp();
     }
   }
-  if(resend_num >= resend_thresh_){
-    ROS_ERROR("Cancel this waypoint because robot can't reach there");
-    move_base_action_.cancelAllGoals();
-  }
+  // if(resend_num >= resend_thresh_){
+  //   ROS_ERROR("Cancel this waypoint because robot can't reach there");
+  //   move_base_action_.cancelAllGoals();
+  // }
 }
 
 int main(int argc, char** argv){
